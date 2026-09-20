@@ -16,11 +16,20 @@ export async function getDb(): Promise<Db | null> {
   if (!uri) return null;
 
   if (!globalForMongo._mongoClientPromise) {
-    globalForMongo._mongoClientPromise = new MongoClient(uri).connect();
+    globalForMongo._mongoClientPromise = new MongoClient(uri, {
+      serverSelectionTimeoutMS: 5000,
+    }).connect();
   }
 
-  const client = await globalForMongo._mongoClientPromise;
-  return client.db(dbName);
+  try {
+    const client = await globalForMongo._mongoClientPromise;
+    return client.db(dbName);
+  } catch (error) {
+    // 접속 실패 시 실패한 promise를 캐싱해두면 영영 복구되지 않으므로 비운다.
+    globalForMongo._mongoClientPromise = undefined;
+    console.error("[mongodb] 연결 실패:", error);
+    return null;
+  }
 }
 
 export const CLICKS_COLLECTION = "link_clicks";

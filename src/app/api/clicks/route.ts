@@ -15,11 +15,16 @@ export async function GET() {
   const db = await getDb();
   if (!db) return NextResponse.json({ counts: {}, connected: false });
 
-  const docs = await db.collection<ClickDoc>(CLICKS_COLLECTION).find().toArray();
-  const counts: Record<string, number> = {};
-  for (const doc of docs) counts[doc._id] = doc.count;
+  try {
+    const docs = await db.collection<ClickDoc>(CLICKS_COLLECTION).find().toArray();
+    const counts: Record<string, number> = {};
+    for (const doc of docs) counts[doc._id] = doc.count;
 
-  return NextResponse.json({ counts, connected: true });
+    return NextResponse.json({ counts, connected: true });
+  } catch {
+    // DB가 잠시 죽어도 페이지는 0회로 떠야 한다.
+    return NextResponse.json({ counts: {}, connected: false });
+  }
 }
 
 /** 링크 클릭 1회 기록 */
@@ -39,11 +44,15 @@ export async function POST(request: Request) {
   const db = await getDb();
   if (!db) return NextResponse.json({ count: null, connected: false });
 
-  const result = await db.collection<ClickDoc>(CLICKS_COLLECTION).findOneAndUpdate(
-    { _id: id },
-    { $inc: { count: 1 }, $set: { updatedAt: new Date() } },
-    { upsert: true, returnDocument: "after" }
-  );
+  try {
+    const result = await db.collection<ClickDoc>(CLICKS_COLLECTION).findOneAndUpdate(
+      { _id: id },
+      { $inc: { count: 1 }, $set: { updatedAt: new Date() } },
+      { upsert: true, returnDocument: "after" }
+    );
 
-  return NextResponse.json({ count: result?.count ?? 1, connected: true });
+    return NextResponse.json({ count: result?.count ?? 1, connected: true });
+  } catch {
+    return NextResponse.json({ count: null, connected: false }, { status: 503 });
+  }
 }
