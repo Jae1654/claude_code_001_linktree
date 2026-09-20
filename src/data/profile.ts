@@ -13,10 +13,10 @@ export type Link = {
 };
 
 export const profile: Profile = {
-  name: "김클로",
-  bio: "세계 최강 바이브코더",
+  name: "조윤재",
+  bio: "데이터 사이언티스트 | 최강의 AI 접목자",
   // public/ 아래에 이미지를 넣고 경로를 바꿔주세요.
-  avatar: "/avatar.svg",
+  avatar: "/avatar-tanjiro.svg",
 };
 
 export const links: Link[] = [
